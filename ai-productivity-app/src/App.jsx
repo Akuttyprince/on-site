@@ -5,7 +5,9 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import ProfileSetup from './pages/ProfileSetup'
+import ChannelPage from './pages/ChannelPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function App() {
   return (
@@ -28,7 +30,29 @@ function App() {
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <ErrorBoundary>
+                      <Dashboard />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/channel/:channelId" 
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary>
+                      <ChannelPage />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/channel/:channelId/chat" 
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary>
+                      <ChannelPage />
+                    </ErrorBoundary>
                   </ProtectedRoute>
                 } 
               />
