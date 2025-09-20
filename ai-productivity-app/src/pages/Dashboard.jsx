@@ -1,84 +1,214 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { motion } from 'framer-motion'
+import { Plus, Users, Calendar, CheckCircle, Clock, Bell } from 'lucide-react'
+import toast, { Toaster } from 'react-hot-toast'
+import axios from 'axios'
 import Navbar from '../components/Navbar'
+import CreateChannelModal from '../components/CreateChannelModal'
+import ChannelCard from '../components/ChannelCard'
+import InvitationsList from '../components/InvitationsList'
 
 const Dashboard = () => {
   const { user } = useAuth()
+  const [channels, setChannels] = useState([])
+  const [invitations, setInvitations] = useState([])
+  const [myTasks, setMyTasks] = useState([])
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      const [channelsRes, invitationsRes, tasksRes] = await Promise.all([
+        axios.get('/api/channels/my-channels'),
+        axios.get('/api/channels/invitations/pending'),
+        axios.get('/api/tasks/my-tasks')
+      ])
+
+      setChannels(channelsRes.data.channels)
+      setInvitations(invitationsRes.data.invitations)
+      setMyTasks(tasksRes.data.tasks)
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error)
+      toast.error('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChannelCreated = (newChannel) => {
+    setChannels(prev => [newChannel, ...prev])
+    setShowCreateModal(false)
+    toast.success('Channel created successfully!')
+  }
+
+  const handleInvitationAccepted = (channelId) => {
+    setInvitations(prev => prev.filter(inv => inv.channelId !== channelId))
+    fetchDashboardData() // Refresh to get updated channels
+    toast.success('Invitation accepted!')
+  }
 
   const stats = [
-    { name: 'Active Projects', value: '12', icon: '📊', color: 'bg-blue-500' },
-    { name: 'Team Members', value: '24', icon: '👥', color: 'bg-green-500' },
-    { name: 'Tasks Completed', value: '156', icon: '✅', color: 'bg-purple-500' },
-    { name: 'Events Organized', value: '8', icon: '📅', color: 'bg-orange-500' },
+    { 
+      name: 'Active Channels', 
+      value: channels.length.toString(), 
+      icon: Users, 
+      color: 'bg-blue-500',
+      change: '+2 this week'
+    },
+    { 
+      name: 'My Tasks', 
+      value: myTasks.length.toString(), 
+      icon: CheckCircle, 
+      color: 'bg-green-500',
+      change: '3 completed today'
+    },
+    { 
+      name: 'Pending Invitations', 
+      value: invitations.length.toString(), 
+      icon: Bell, 
+      color: 'bg-orange-500',
+      change: invitations.length > 0 ? 'Action required' : 'All caught up'
+    },
+    { 
+      name: 'Events This Month', 
+      value: channels.filter(c => c.status === 'active').length.toString(), 
+      icon: Calendar, 
+      color: 'bg-purple-500',
+      change: '2 upcoming'
+    },
   ]
 
-  const recentActivities = [
-    { id: 1, action: 'Created new project', item: 'AI Workshop 2024', time: '2 hours ago' },
-    { id: 2, action: 'Added team member', item: 'John Doe to Marketing Team', time: '4 hours ago' },
-    { id: 3, action: 'Completed task', item: 'Design review for mobile app', time: '6 hours ago' },
-    { id: 4, action: 'Scheduled event', item: 'Monthly team meeting', time: '1 day ago' },
-  ]
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <Toaster position="top-right" />
       
       <div className="container mx-auto px-6 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back, {user?.name}! 👋
           </h1>
           <p className="text-gray-600">
-            Here's what's happening with your projects today.
+            Manage your events, collaborate with teams, and let AI help you organize better.
           </p>
-        </div>
+        </motion.div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
-                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+          {stats.map((stat, index) => {
+            const IconComponent = stat.icon
+            return (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
+                  </div>
+                  <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-white`}>
+                    <IconComponent size={24} />
+                  </div>
                 </div>
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-white text-xl`}>
-                  {stat.icon}
-                </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
 
+        {/* Invitations Alert */}
+        {invitations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8"
+          >
+            <InvitationsList 
+              invitations={invitations} 
+              onAccept={handleInvitationAccepted}
+            />
+          </motion.div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Recent Activities */}
+          {/* Channels Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Activities</h2>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition duration-200">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.action}: <span className="text-blue-600">{activity.item}</span>
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">My Channels</h2>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition duration-300"
+                >
+                  <Plus size={20} />
+                  <span>Create Channel</span>
+                </motion.button>
               </div>
+              
+              {channels.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No channels yet</h3>
+                  <p className="text-gray-600 mb-4">Create your first channel to start organizing events with your team.</p>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
+                  >
+                    Create Your First Channel
+                  </button>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {channels.map((channel, index) => (
+                    <motion.div
+                      key={channel._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <ChannelCard channel={channel} />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Quick Actions & Profile */}
+          {/* Sidebar */}
           <div className="space-y-6">
             {/* Profile Card */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-xl shadow-lg p-6"
+            >
               <h3 className="text-lg font-bold text-gray-900 mb-4">Profile</h3>
               <div className="flex items-center space-x-4 mb-4">
                 <img 
@@ -104,35 +234,51 @@ const Dashboard = () => {
               {user?.mobileNo && (
                 <p className="text-sm text-gray-600">📱 {user.mobileNo}</p>
               )}
-            </div>
+            </motion.div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Create New Project</span>
-                </button>
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a4 4 0 11-8 0v-1a4 4 0 014-4h4a4 4 0 014 4v1a4 4 0 11-8 0z" />
-                  </svg>
-                  <span>Schedule Event</span>
-                </button>
-                <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span>Invite Team Member</span>
-                </button>
-              </div>
-            </div>
+            {/* My Tasks */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl shadow-lg p-6"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-4">My Tasks</h3>
+              {myTasks.length === 0 ? (
+                <p className="text-gray-600 text-sm">No tasks assigned yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {myTasks.slice(0, 3).map((task) => (
+                    <div key={task._id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className={`w-3 h-3 rounded-full ${
+                        task.priority === 'high' ? 'bg-red-500' :
+                        task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                        <p className="text-xs text-gray-500">{task.channel.name}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {myTasks.length > 3 && (
+                    <p className="text-xs text-gray-500 text-center">
+                      +{myTasks.length - 3} more tasks
+                    </p>
+                  )}
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
       </div>
+
+      {/* Create Channel Modal */}
+      {showCreateModal && (
+        <CreateChannelModal
+          onClose={() => setShowCreateModal(false)}
+          onChannelCreated={handleChannelCreated}
+        />
+      )}
     </div>
   )
 }
