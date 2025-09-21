@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ArrowLeft, 
   Users, 
@@ -9,7 +9,9 @@ import {
   MessageSquare, 
   CheckSquare,
   BarChart3,
-  Calendar
+  Calendar,
+  MessageCircle,
+  UserPlus
 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -18,6 +20,7 @@ import ChannelChat from '../components/ChannelChat'
 import KanbanBoard from '../components/KanbanBoard'
 import ChannelAnalytics from '../components/ChannelAnalytics'
 import ChannelSettings from '../components/ChannelSettings'
+import GlobalChat from '../components/GlobalChat'
 
 const ChannelPage = () => {
   const { channelId } = useParams()
@@ -25,6 +28,7 @@ const ChannelPage = () => {
   const [channel, setChannel] = useState(null)
   const [activeTab, setActiveTab] = useState('chat')
   const [loading, setLoading] = useState(true)
+  const [showGlobalChat, setShowGlobalChat] = useState(false)
 
   useEffect(() => {
     fetchChannelData()
@@ -122,6 +126,28 @@ const ChannelPage = () => {
                 <Calendar size={20} />
                 <span>Created {new Date(channel.createdAt).toLocaleDateString()}</span>
               </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowGlobalChat(true)}
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                >
+                  <MessageCircle size={18} />
+                  <span>Team Chat</span>
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                >
+                  <UserPlus size={18} />
+                  <span>Add Member</span>
+                </motion.button>
+              </div>
             </div>
           </div>
 
@@ -137,10 +163,12 @@ const ChannelPage = () => {
               {tabs.map((tab) => {
                 const IconComponent = tab.icon
                 return (
-                  <button
+                  <motion.button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition duration-200 ${
+                    whileHover={{ y: -2 }}
+                    whileTap={{ y: 0 }}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition duration-200 relative ${
                       activeTab === tab.id
                         ? `border-blue-500 ${tab.color}`
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -148,7 +176,15 @@ const ChannelPage = () => {
                   >
                     <IconComponent size={20} />
                     <span>{tab.label}</span>
-                  </button>
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </motion.button>
                 )
               })}
             </nav>
@@ -156,18 +192,32 @@ const ChannelPage = () => {
         </div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === 'chat' && <ChannelChat channel={channel} />}
-          {activeTab === 'tasks' && <KanbanBoard channel={channel} />}
-          {activeTab === 'analytics' && <ChannelAnalytics channel={channel} />}
-          {activeTab === 'settings' && <ChannelSettings channel={channel} onChannelUpdate={setChannel} />}
-        </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            {activeTab === 'chat' && <ChannelChat channel={channel} />}
+            {activeTab === 'tasks' && <KanbanBoard channel={channel} />}
+            {activeTab === 'analytics' && <ChannelAnalytics channel={channel} />}
+            {activeTab === 'settings' && <ChannelSettings channel={channel} onChannelUpdate={setChannel} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
+
+      {/* Global Chat Modal */}
+      <AnimatePresence>
+        {showGlobalChat && (
+          <GlobalChat 
+            channel={channel} 
+            isOpen={showGlobalChat} 
+            onClose={() => setShowGlobalChat(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

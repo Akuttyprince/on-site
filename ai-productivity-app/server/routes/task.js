@@ -1,12 +1,14 @@
 import express from 'express';
 import Task from '../models/Task.js';
 import Channel from '../models/Channel.js';
-import { verifyToken } from './auth.js';
+import User from '../models/User.js';
+import auth from '../middleware/auth.js';
+import telegramService from '../services/telegramService.js';
 
 const router = express.Router();
 
 // Create a new task
-router.post('/create', verifyToken, async (req, res) => {
+router.post('/create', auth.verifyToken, async (req, res) => {
   try {
     const { 
       title, 
@@ -64,7 +66,7 @@ router.post('/create', verifyToken, async (req, res) => {
 });
 
 // Get tasks for a channel
-router.get('/channel/:channelId', verifyToken, async (req, res) => {
+router.get('/channel/:channelId', auth.verifyToken, async (req, res) => {
   try {
     const channelId = req.params.channelId;
 
@@ -106,7 +108,7 @@ router.get('/channel/:channelId', verifyToken, async (req, res) => {
 });
 
 // Get user's tasks across all channels
-router.get('/my-tasks', verifyToken, async (req, res) => {
+router.get('/my-tasks', auth.verifyToken, async (req, res) => {
   try {
     const tasks = await Task.find({ assignedTo: req.userId })
       .populate('channel', 'name eventType')
@@ -121,7 +123,7 @@ router.get('/my-tasks', verifyToken, async (req, res) => {
 });
 
 // Update task status
-router.patch('/:taskId/status', verifyToken, async (req, res) => {
+router.patch('/:taskId/status', auth.verifyToken, async (req, res) => {
   try {
     const { status } = req.body;
     const taskId = req.params.taskId;
@@ -130,15 +132,21 @@ router.patch('/:taskId/status', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const task = await Task.findById(taskId);
+    const task = await Task.findById(taskId)
+      .populate('assignedTo', 'name email profilePicture telegramId')
+      .populate('createdBy', 'name email profilePicture');
+    
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    // Store old status for notification
+    const oldStatus = task.status;
+
     // Check if user has permission to update
-    const channel = await Channel.findById(task.channel);
+    const channel = await Channel.findById(task.channel).populate('members.user', 'telegramId name');
     const isMember = channel.members.some(member => 
-      member.user.toString() === req.userId
+      member.user._id.toString() === req.userId
     );
 
     if (!isMember) {
@@ -147,8 +155,35 @@ router.patch('/:taskId/status', verifyToken, async (req, res) => {
 
     task.status = status;
     await task.save();
-    await task.populate('assignedTo', 'name email profilePicture');
-    await task.populate('createdBy', 'name email profilePicture');
+
+    // Get user who updated the task
+    const updatedBy = await User.findById(req.userId);
+
+    // Send Telegram notification to assigned user and channel members
+    const telegramIds = [];
+    
+    // Add assigned user's telegram ID
+    if (task.assignedTo?.telegramId) {
+      telegramIds.push(task.assignedTo.telegramId);
+    }
+    
+    // Add all channel members' telegram IDs
+    channel.members.forEach(member => {
+      if (member.user.telegramId && !telegramIds.includes(member.user.telegramId)) {
+        telegramIds.push(member.user.telegramId);
+      }
+    });
+
+    // Send Telegram notifications
+    if (telegramIds.length > 0) {
+      await telegramService.sendTaskUpdate(telegramIds[0], {
+        task,
+        user: updatedBy,
+        oldStatus,
+        newStatus: status,
+        timestamp: new Date()
+      });
+    }
 
     res.json({
       message: 'Task status updated successfully',
@@ -161,7 +196,7 @@ router.patch('/:taskId/status', verifyToken, async (req, res) => {
 });
 
 // Add comment to task
-router.post('/:taskId/comment', verifyToken, async (req, res) => {
+router.post('/:taskId/comment', auth.verifyToken, async (req, res) => {
   try {
     const { message } = req.body;
     const taskId = req.params.taskId;

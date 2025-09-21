@@ -44,6 +44,12 @@ const Navbar = () => {
                 >
                   Dashboard
                 </Link>
+                <Link 
+                  to="/profile-edit"
+                  className="text-gray-600 hover:text-blue-600 transition duration-300"
+                >
+                  Profile
+                </Link>
                 <div className="flex items-center space-x-2">
                   <img 
                     src={user.profilePicture || '/default-avatar.png'} 

@@ -1,11 +1,11 @@
 import express from 'express';
 import User from '../models/User.js';
-import { verifyToken } from './auth.js';
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get user profile
-router.get('/profile', verifyToken, async (req, res) => {
+router.get('/profile', auth.verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-googleId');
     if (!user) {
@@ -19,7 +19,7 @@ router.get('/profile', verifyToken, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', verifyToken, async (req, res) => {
+router.put('/profile', auth.verifyToken, async (req, res) => {
   try {
     const { mobileNo, bio, role } = req.body;
 

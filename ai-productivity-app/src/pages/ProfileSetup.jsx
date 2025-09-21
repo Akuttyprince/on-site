@@ -9,7 +9,9 @@ const ProfileSetup = () => {
   const [formData, setFormData] = useState({
     mobileNo: '',
     bio: '',
-    role: 'volunteer'
+    role: 'volunteer',
+    telegramId: '',
+    telegramUsername: ''
   })
 
   const handleChange = (e) => {
@@ -116,6 +118,57 @@ const ProfileSetup = () => {
                 <option value="volunteer">Volunteer</option>
                 <option value="organizer">Organizer</option>
               </select>
+            </div>
+
+            {/* Telegram Integration */}
+            <div className="border-t pt-6">
+              <div className="flex items-center mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0C5.374 0 0 5.373 0 12s5.374 12 12 12 12-5.373 12-12S18.626 0 12 0zm5.568 8.16c-.169 1.858-.896 6.728-.896 6.728-.377 2.655-.377 2.655-1.377 2.655-.896 0-1.377-.896-1.377-2.655 0 0-.727-4.87-.896-6.728-.169-1.858.727-2.655 1.858-2.655s2.027.797 1.858 2.655z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Telegram Integration</h3>
+                  <p className="text-sm text-gray-600">Get notifications for task updates and team messages</p>
+                </div>
+              </div>
+
+              {/* Telegram Username */}
+              <div className="mb-4">
+                <label htmlFor="telegramUsername" className="block text-sm font-medium text-gray-700 mb-2">
+                  Telegram Username (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="telegramUsername"
+                  name="telegramUsername"
+                  value={formData.telegramUsername}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="@yourusername"
+                />
+                <p className="text-xs text-gray-500 mt-1">Your Telegram username (without @)</p>
+              </div>
+
+              {/* Telegram ID */}
+              <div>
+                <label htmlFor="telegramId" className="block text-sm font-medium text-gray-700 mb-2">
+                  Telegram Chat ID (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="telegramId"
+                  name="telegramId"
+                  value={formData.telegramId}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="123456789"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Get your Chat ID by messaging <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@userinfobot</a> on Telegram
+                </p>
+              </div>
             </div>
 
             {/* Submit Button */}

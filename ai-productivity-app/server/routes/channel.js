@@ -1,12 +1,14 @@
 import express from 'express';
 import Channel from '../models/Channel.js';
 import User from '../models/User.js';
-import { verifyToken } from './auth.js';
+import Message from '../models/Message.js';
+import auth from '../middleware/auth.js';
+import telegramService from '../services/telegramService.js';
 
 const router = express.Router();
 
 // Create a new channel
-router.post('/create', verifyToken, async (req, res) => {
+router.post('/create', auth.verifyToken, async (req, res) => {
   try {
     const { name, description, eventType } = req.body;
 
@@ -40,7 +42,7 @@ router.post('/create', verifyToken, async (req, res) => {
 });
 
 // Get user's channels
-router.get('/my-channels', verifyToken, async (req, res) => {
+router.get('/my-channels', auth.verifyToken, async (req, res) => {
   try {
     const channels = await Channel.find({
       $or: [
@@ -60,7 +62,7 @@ router.get('/my-channels', verifyToken, async (req, res) => {
 });
 
 // Get channel details
-router.get('/:channelId', verifyToken, async (req, res) => {
+router.get('/:channelId', auth.verifyToken, async (req, res) => {
   try {
     const channel = await Channel.findById(req.params.channelId)
       .populate('admin', 'name email profilePicture')
@@ -88,7 +90,7 @@ router.get('/:channelId', verifyToken, async (req, res) => {
 });
 
 // Invite member to channel
-router.post('/:channelId/invite', verifyToken, async (req, res) => {
+router.post('/:channelId/invite', auth.verifyToken, async (req, res) => {
   try {
     const { email, role = 'volunteer' } = req.body;
     const channelId = req.params.channelId;
@@ -157,7 +159,7 @@ router.post('/:channelId/invite', verifyToken, async (req, res) => {
 });
 
 // Accept invitation
-router.post('/invitation/:channelId/accept', verifyToken, async (req, res) => {
+router.post('/invitation/:channelId/accept', auth.verifyToken, async (req, res) => {
   try {
     const channelId = req.params.channelId;
     const user = await User.findById(req.userId);
@@ -200,7 +202,7 @@ router.post('/invitation/:channelId/accept', verifyToken, async (req, res) => {
 });
 
 // Get user's pending invitations
-router.get('/invitations/pending', verifyToken, async (req, res) => {
+router.get('/invitations/pending', auth.verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
     
@@ -231,6 +233,93 @@ router.get('/invitations/pending', verifyToken, async (req, res) => {
     res.json({ invitations });
   } catch (error) {
     console.error('Get invitations error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get channel messages
+router.get('/:channelId/messages', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    
+    // Check if user is a member of the channel
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    const isMember = channel.members.some(member => 
+      member.user.toString() === req.userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const messages = await Message.find({ channel: channelId })
+      .populate('sender', 'name email profilePicture')
+      .sort({ createdAt: 1 })
+      .limit(100); // Limit to last 100 messages
+
+    res.json({ messages });
+  } catch (error) {
+    console.error('Get messages error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Send message to channel
+router.post('/:channelId/messages', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    const { content, type = 'text' } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Message content is required' });
+    }
+
+    // Check if user is a member of the channel
+    const channel = await Channel.findById(channelId).populate('members.user', 'telegramId telegramUsername name');
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    const isMember = channel.members.some(member => 
+      member.user._id.toString() === req.userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const message = new Message({
+      content,
+      type,
+      sender: req.userId,
+      channel: channelId
+    });
+
+    await message.save();
+    await message.populate('sender', 'name email profilePicture');
+
+    // Send Telegram notifications to all members
+    const telegramIds = channel.members
+      .map(member => member.user.telegramId)
+      .filter(id => id && id !== '');
+
+    if (telegramIds.length > 0) {
+      const user = await User.findById(req.userId);
+      await telegramService.sendChannelNotification(telegramIds, channel, {
+        channel,
+        user,
+        message: content,
+        timestamp: new Date()
+      });
+    }
+
+    res.status(201).json({ message });
+  } catch (error) {
+    console.error('Send message error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

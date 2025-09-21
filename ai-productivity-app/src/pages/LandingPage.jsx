@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Bot, Users, Calendar, BarChart3, MessageSquare, CheckSquare } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
 const LandingPage = () => {
@@ -8,84 +10,184 @@ const LandingPage = () => {
       
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-16">
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            AI for Productivity & 
-            <span className="text-blue-600"> Business Tools</span>
-          </h1>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center"
+        >
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-5xl md:text-6xl font-bold text-gray-900 mb-6"
+          >
+            AI-Powered Event Management
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-blue-600"
+            > & Team Collaboration</motion.span>
+          </motion.h1>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Revolutionize your workflow with intelligent automation and cutting-edge AI solutions. 
-            Streamline your business processes, boost productivity, and unlock your team's potential.
-          </p>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
+          >
+            Revolutionize your event planning with intelligent AI assistance, real-time collaboration, 
+            and seamless team management. Perfect for hackathons, conferences, workshops, and more.
+          </motion.p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link 
-              to="/login"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 shadow-lg"
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              Get Started
-            </Link>
-            <button className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-4 px-8 rounded-lg text-lg transition duration-300">
+              <Link 
+                to="/login"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg text-lg transition duration-300 shadow-lg"
+              >
+                Get Started
+              </Link>
+            </motion.div>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-4 px-8 rounded-lg text-lg transition duration-300"
+            >
               Learn More
-            </button>
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
 
         {/* Features Section */}
-        <div className="mt-20 grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Lightning Fast</h3>
-            <p className="text-gray-600">
-              Experience blazing-fast performance with our optimized AI algorithms designed for maximum efficiency.
-            </p>
-          </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="mt-20 grid md:grid-cols-3 gap-8"
+        >
+          {[
+            {
+              icon: Bot,
+              title: "AI-Powered Planning",
+              description: "Get intelligent event planning assistance with AI-generated action plans, role suggestions, and smart recommendations.",
+              color: "blue"
+            },
+            {
+              icon: Users,
+              title: "Team Collaboration",
+              description: "Real-time collaboration with WhatsApp-style messaging, task management, and instant notifications.",
+              color: "green"
+            },
+            {
+              icon: BarChart3,
+              title: "Analytics & Insights",
+              description: "Track team productivity, monitor progress, and get AI-powered insights to optimize your events.",
+              color: "purple"
+            }
+          ].map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1 + index * 0.2 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300"
+            >
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                className={`w-12 h-12 bg-${feature.color}-100 rounded-lg flex items-center justify-center mb-4`}
+              >
+                <feature.icon className={`w-6 h-6 text-${feature.color}-600`} />
+              </motion.div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+              <p className="text-gray-600">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
 
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        {/* Additional Features */}
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+          className="mt-16 grid md:grid-cols-2 gap-8"
+        >
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-xl"
+          >
+            <div className="flex items-center mb-4">
+              <MessageSquare className="w-8 h-8 mr-3" />
+              <h3 className="text-2xl font-bold">Global Team Chat</h3>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Smart Automation</h3>
-            <p className="text-gray-600">
-              Automate repetitive tasks and focus on what matters most with intelligent workflow automation.
+            <p className="text-blue-100 mb-4">
+              WhatsApp-style messaging with real-time notifications, task completion alerts, and Telegram integration.
             </p>
-          </div>
+            <ul className="space-y-2 text-blue-100">
+              <li>• Real-time messaging</li>
+              <li>• Task completion notifications</li>
+              <li>• Telegram bot integration</li>
+              <li>• File sharing & attachments</li>
+            </ul>
+          </motion.div>
 
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="bg-gradient-to-r from-green-500 to-teal-600 text-white p-8 rounded-xl"
+          >
+            <div className="flex items-center mb-4">
+              <CheckSquare className="w-8 h-8 mr-3" />
+              <h3 className="text-2xl font-bold">Smart Task Management</h3>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Team Collaboration</h3>
-            <p className="text-gray-600">
-              Seamlessly collaborate with your team using our integrated communication and project management tools.
+            <p className="text-green-100 mb-4">
+              Kanban boards with drag-and-drop, AI task suggestions, and automated progress tracking.
             </p>
-          </div>
-        </div>
+            <ul className="space-y-2 text-green-100">
+              <li>• Drag & drop Kanban boards</li>
+              <li>• AI-powered task suggestions</li>
+              <li>• Priority management</li>
+              <li>• Progress analytics</li>
+            </ul>
+          </motion.div>
+        </motion.div>
 
         {/* CTA Section */}
-        <div className="mt-20 text-center bg-white rounded-2xl p-12 shadow-xl">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.8 }}
+          className="mt-20 text-center"
+        >
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Ready to Transform Your Business?
+            Ready to Transform Your Event Management?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Join thousands of businesses already using our AI-powered productivity tools.
+          <p className="text-xl text-gray-600 mb-8">
+            Join thousands of event organizers who trust our AI-powered platform
           </p>
-          <Link 
-            to="/login"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 shadow-lg inline-block"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            Start Your Journey
-          </Link>
-        </div>
+            <Link 
+              to="/login"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-12 rounded-lg text-lg transition duration-300 shadow-lg"
+            >
+              Start Your Free Trial
+            </Link>
+          </motion.div>
+        </motion.div>
       </main>
     </div>
   )

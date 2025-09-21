@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['organizer', 'volunteer'],
     default: 'volunteer'
+  },
+  telegramId: {
+    type: String,
+    default: ''
+  },
+  telegramUsername: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

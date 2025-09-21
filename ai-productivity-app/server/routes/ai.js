@@ -1,13 +1,13 @@
 import express from 'express';
 import Channel from '../models/Channel.js';
 import Message from '../models/Message.js';
-import { verifyToken } from './auth.js';
+import auth from '../middleware/auth.js';
 import { generateEventPlan, generateTaskSuggestions, generateRoleSuggestions } from '../services/aiService.js';
 
 const router = express.Router();
 
 // Generate AI event plan
-router.post('/generate-plan', verifyToken, async (req, res) => {
+router.post('/generate-plan', auth.verifyToken, async (req, res) => {
   try {
     const { channelId, eventDetails } = req.body;
 
@@ -66,7 +66,7 @@ router.post('/generate-plan', verifyToken, async (req, res) => {
 });
 
 // Ask AI a question
-router.post('/ask', verifyToken, async (req, res) => {
+router.post('/ask', auth.verifyToken, async (req, res) => {
   try {
     const { channelId, question, context } = req.body;
 
@@ -131,7 +131,7 @@ router.post('/ask', verifyToken, async (req, res) => {
 });
 
 // Get task suggestions
-router.post('/task-suggestions', verifyToken, async (req, res) => {
+router.post('/task-suggestions', auth.verifyToken, async (req, res) => {
   try {
     const { taskTitle, context } = req.body;
 

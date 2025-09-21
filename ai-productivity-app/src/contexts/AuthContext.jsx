@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await axios.put('http://localhost:5000/api/user/profile', profileData)
+      const response = await axios.put('/api/auth/profile', profileData)
       setUser(response.data.user)
       return response.data.user
     } catch (error) {

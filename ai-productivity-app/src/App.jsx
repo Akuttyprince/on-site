@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import ProfileSetup from './pages/ProfileSetup'
+import ProfileEdit from './pages/ProfileEdit'
 import ChannelPage from './pages/ChannelPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -23,6 +24,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProfileSetup />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile-edit" 
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary>
+                      <ProfileEdit />
+                    </ErrorBoundary>
                   </ProtectedRoute>
                 } 
               />
