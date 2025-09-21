@@ -106,6 +106,140 @@ Ready to collaborate! 🚀`;
       console.error('Failed to send welcome message:', error);
     }
   }
+
+  async sendTaskCompletionNotification(telegramIds, taskData, channelData) {
+    if (!this.bot || !telegramIds || telegramIds.length === 0) return;
+
+    try {
+      const { task, user, completedAt } = taskData;
+      const { channel } = channelData;
+      const time = new Date(completedAt).toLocaleString();
+
+      const message = `🎉 *Task Completed!*
+
+✅ *Task:* ${task.title}
+👤 *Completed by:* ${user.name}
+📋 *Channel:* ${channel.name}
+📅 *Completed at:* ${time}
+
+${task.description ? `📝 *Description:* ${task.description}` : ''}
+
+Great job, team! 🚀`;
+
+      // Send to all channel members
+      const promises = telegramIds.map(telegramId => 
+        this.bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' })
+      );
+      
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Failed to send task completion notifications:', error);
+    }
+  }
+
+  async sendAIPlanNotification(telegramIds, planData, channelData) {
+    if (!this.bot || !telegramIds || telegramIds.length === 0) return;
+
+    try {
+      const { eventType, generatedAt } = planData;
+      const { channel } = channelData;
+      const time = new Date(generatedAt).toLocaleString();
+
+      const message = `🤖 *AI Event Plan Generated!*
+
+📋 *Channel:* ${channel.name}
+🎯 *Event Type:* ${eventType}
+📅 *Generated at:* ${time}
+
+🔍 *The AI has created a comprehensive event plan with:*
+• Timeline and milestones
+• Role assignments
+• Budget breakdown
+• Task recommendations
+• Risk management
+
+Check your dashboard to view the complete plan! 📊`;
+
+      const promises = telegramIds.map(telegramId => 
+        this.bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' })
+      );
+      
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Failed to send AI plan notifications:', error);
+    }
+  }
+
+  async sendRoleAssignmentNotification(telegramId, roleData, channelData) {
+    if (!this.bot || !telegramId) return;
+
+    try {
+      const { role, assignedBy, assignedAt } = roleData;
+      const { channel } = channelData;
+      const time = new Date(assignedAt).toLocaleString();
+
+      const message = `👥 *Role Assignment Update*
+
+🎯 *New Role:* ${role}
+📋 *Channel:* ${channel.name}
+👤 *Assigned by:* ${assignedBy.name}
+📅 *Assigned at:* ${time}
+
+You now have ${role} permissions in this channel. Check your dashboard for role-specific tasks! 💼`;
+
+      await this.bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
+    } catch (error) {
+      console.error('Failed to send role assignment notification:', error);
+    }
+  }
+
+  async sendEventMilestoneNotification(telegramIds, milestoneData, channelData) {
+    if (!this.bot || !telegramIds || telegramIds.length === 0) return;
+
+    try {
+      const { milestone, progress, achievedAt } = milestoneData;
+      const { channel } = channelData;
+      const time = new Date(achievedAt).toLocaleString();
+
+      const message = `🎯 *Milestone Achieved!*
+
+🏆 *Milestone:* ${milestone}
+📋 *Channel:* ${channel.name}
+📊 *Progress:* ${progress}%
+📅 *Achieved at:* ${time}
+
+Keep up the excellent work, team! 🌟`;
+
+      const promises = telegramIds.map(telegramId => 
+        this.bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' })
+      );
+      
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Failed to send milestone notifications:', error);
+    }
+  }
+
+  async sendExportNotification(telegramId, exportData) {
+    if (!this.bot || !telegramId) return;
+
+    try {
+      const { type, filename, downloadUrl, generatedAt } = exportData;
+      const time = new Date(generatedAt).toLocaleString();
+
+      const message = `📄 *Export Ready!*
+
+📊 *Type:* ${type.toUpperCase()} Export
+📁 *Filename:* ${filename}
+📅 *Generated at:* ${time}
+
+Your export is ready for download! 📥`;
+
+      await this.bot.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
+    } catch (error) {
+      console.error('Failed to send export notification:', error);
+    }
+  }
 }
 
 export default new TelegramService();

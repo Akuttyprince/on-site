@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { formatDistanceToNow, format } from 'date-fns'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { io } from 'socket.io-client'
 
 const GlobalChat = ({ channel, isOpen, onClose }) => {
   const { user } = useAuth()
@@ -24,10 +25,39 @@ const GlobalChat = ({ channel, isOpen, onClose }) => {
   const [loading, setLoading] = useState(false)
   const [typing, setTyping] = useState([])
   const messagesEndRef = useRef(null)
+  const socketRef = useRef(null)
 
   useEffect(() => {
     if (isOpen && channel) {
       fetchMessages()
+      
+      // Initialize socket connection
+      socketRef.current = io('http://localhost:5000')
+      
+      // Join channel room
+      socketRef.current.emit('join-channel', channel._id)
+      
+      // Listen for new messages
+      socketRef.current.on('new-message', (data) => {
+        if (data.channelId === channel._id) {
+          setMessages(prev => {
+            // Check if message already exists to avoid duplicates
+            const exists = prev.some(msg => msg._id === data.message._id)
+            if (!exists) {
+              return [...prev, data.message]
+            }
+            return prev
+          })
+        }
+      })
+      
+      // Cleanup on unmount or channel change
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.emit('leave-channel', channel._id)
+          socketRef.current.disconnect()
+        }
+      }
     }
   }, [isOpen, channel])
 
@@ -131,10 +161,12 @@ const GlobalChat = ({ channel, isOpen, onClose }) => {
   }
 
   const renderMessage = (message, index) => {
+    if (!message || !message.sender) return null
+    
     const isOwn = message.sender._id === user._id
-    const showAvatar = !isOwn && (index === 0 || messages[index - 1]?.sender._id !== message.sender._id)
+    const showAvatar = !isOwn && (index === 0 || messages[index - 1]?.sender?._id !== message.sender._id)
     const showTime = index === messages.length - 1 || 
-                    messages[index + 1]?.sender._id !== message.sender._id ||
+                    messages[index + 1]?.sender?._id !== message.sender._id ||
                     new Date(messages[index + 1]?.createdAt) - new Date(message.createdAt) > 300000 // 5 minutes
 
     return (

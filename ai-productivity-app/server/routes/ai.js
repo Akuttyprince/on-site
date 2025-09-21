@@ -150,4 +150,35 @@ router.post('/task-suggestions', auth.verifyToken, async (req, res) => {
   }
 });
 
+// Store AI-generated plan from Python backend
+router.post('/store-plan', async (req, res) => {
+  try {
+    const planData = req.body;
+    
+    // Create AI message in the channel
+    if (planData.channel_id) {
+      const aiMessage = new Message({
+        channel: planData.channel_id,
+        content: `🤖 **AI Action Plan Generated!**\n\n**Request:** ${planData.user_request}\n**Event Type:** ${planData.event_type}\n\nI've created a comprehensive action plan with detailed cards and timeline. Check the AI assistant for the full plan!`,
+        type: 'ai-response',
+        isAI: true,
+        metadata: {
+          aiContext: { 
+            type: 'action-plan', 
+            planId: planData.plan_id,
+            userRequest: planData.user_request
+          }
+        }
+      });
+
+      await aiMessage.save();
+    }
+    
+    res.json({ success: true, message: 'Plan stored successfully' });
+  } catch (error) {
+    console.error('Store AI plan error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router;

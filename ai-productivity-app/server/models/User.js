@@ -34,8 +34,26 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['organizer', 'volunteer'],
+    enum: ['admin', 'organizer', 'volunteer'],
     default: 'volunteer'
+  },
+  permissions: {
+    canCreateChannels: {
+      type: Boolean,
+      default: true
+    },
+    canManageUsers: {
+      type: Boolean,
+      default: false
+    },
+    canAccessAnalytics: {
+      type: Boolean,
+      default: false
+    },
+    canExportData: {
+      type: Boolean,
+      default: false
+    }
   },
   telegramId: {
     type: String,
@@ -44,6 +62,40 @@ const userSchema = new mongoose.Schema({
   telegramUsername: {
     type: String,
     default: ''
+  },
+  skills: [{
+    type: String,
+    trim: true
+  }],
+  experience: {
+    type: String,
+    enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+    default: 'beginner'
+  },
+  availability: {
+    type: String,
+    enum: ['full-time', 'part-time', 'weekends', 'flexible'],
+    default: 'flexible'
+  },
+  preferences: {
+    eventTypes: [{
+      type: String,
+      enum: ['hackathon', 'wedding', 'conference', 'workshop', 'meeting', 'festival', 'other']
+    }],
+    notifications: {
+      email: {
+        type: Boolean,
+        default: true
+      },
+      telegram: {
+        type: Boolean,
+        default: true
+      },
+      inApp: {
+        type: Boolean,
+        default: true
+      }
+    }
   }
 }, {
   timestamps: true

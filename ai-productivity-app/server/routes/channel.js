@@ -10,7 +10,7 @@ const router = express.Router();
 // Create a new channel
 router.post('/create', auth.verifyToken, async (req, res) => {
   try {
-    const { name, description, eventType } = req.body;
+    const { name, description, eventType, aiContext } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: 'Channel name is required' });
@@ -20,6 +20,7 @@ router.post('/create', auth.verifyToken, async (req, res) => {
       name,
       description,
       eventType,
+      aiContext, // Store AI context for better assistance
       admin: req.userId,
       members: [{
         user: req.userId,
@@ -30,6 +31,26 @@ router.post('/create', auth.verifyToken, async (req, res) => {
     await channel.save();
     await channel.populate('admin', 'name email profilePicture');
     await channel.populate('members.user', 'name email profilePicture');
+
+    // If AI context is provided, send initial AI welcome message
+    if (aiContext && (aiContext.objective || aiContext.targetAudience)) {
+      try {
+        const welcomeMessage = new Message({
+          content: `🤖 **Welcome to ${name}!**\n\nI'm your AI assistant and I'm here to help you plan and execute this ${eventType}.\n\nBased on your inputs:\n${aiContext.objective ? `🎯 **Objective:** ${aiContext.objective}\n` : ''}${aiContext.targetAudience ? `👥 **Target Audience:** ${aiContext.targetAudience}\n` : ''}${aiContext.budget ? `💰 **Budget:** ${aiContext.budget}\n` : ''}${aiContext.timeline ? `⏰ **Timeline:** ${aiContext.timeline}\n` : ''}${aiContext.challenges ? `⚠️ **Key Challenges:** ${aiContext.challenges}\n` : ''}\nI'll provide personalized recommendations and help you create action plans. Feel free to ask me anything!`,
+          type: 'ai-welcome',
+          isAI: true,
+          channel: channel._id,
+          metadata: {
+            aiContext: aiContext
+          }
+        });
+
+        await welcomeMessage.save();
+      } catch (msgError) {
+        console.error('Failed to create welcome message:', msgError);
+        // Don't fail channel creation if welcome message fails
+      }
+    }
 
     res.status(201).json({
       message: 'Channel created successfully',
@@ -301,6 +322,14 @@ router.post('/:channelId/messages', auth.verifyToken, async (req, res) => {
 
     await message.save();
     await message.populate('sender', 'name email profilePicture');
+
+    // Emit socket event for real-time updates
+    if (req.app.get('io')) {
+      req.app.get('io').to(channelId).emit('new-message', {
+        message: message,
+        channelId: channelId
+      });
+    }
 
     // Send Telegram notifications to all members
     const telegramIds = channel.members

@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node server/server.js",
-    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
+    "ai-backend": "cd ai-backend && python app.py",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
+    "dev:all": "concurrently \"npm run server\" \"npm run ai-backend\" \"npm run dev\"",
+    "setup:ai": "cd ai-backend && python -m venv venv && venv\\Scripts\\activate && pip install -r requirements.txt"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
@@ -28,6 +31,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.4.1",
+    "react-icons": "^4.9.0",
     "react-router-dom": "^6.26.0",
     "socket.io": "^4.7.0",
     "socket.io-client": "^4.7.0"

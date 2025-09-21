@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import ProfileSetup from './pages/ProfileSetup'
 import ProfileEdit from './pages/ProfileEdit'
 import ChannelPage from './pages/ChannelPage'
+import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -63,6 +64,16 @@ function App() {
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <ChannelPage />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary>
+                      <AdminDashboard />
                     </ErrorBoundary>
                   </ProtectedRoute>
                 } 

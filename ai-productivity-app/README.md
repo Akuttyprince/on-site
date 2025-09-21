@@ -1,95 +1,124 @@
-# AI Productivity App
+# AI Productivity App - Event Management Platform
 
-A modern React application with Google OAuth authentication, MongoDB integration, and user profile management for event organizing and productivity tools.
+A comprehensive event management platform powered by AI, featuring separate Python AI backend and Node.js API server with React frontend.
 
 ## Features
 
-- 🚀 Modern React with Vite
-- 🎨 Beautiful UI with Tailwind CSS
-- 🔐 Google OAuth Authentication
-- 📊 User Dashboard
-- 👤 Profile Management
-- 🗄️ MongoDB Integration
-- 📱 Responsive Design
+### Core Features
+- **User Authentication**: Google OAuth integration with role-based access
+- **Event Channels**: Create and manage event-specific channels
+- **Task Management**: Kanban-style task boards with real-time updates
+- **Team Collaboration**: Real-time chat and messaging
+- **AI Integration**: Advanced AI-powered event planning and suggestions
+- **Analytics**: Track progress and team performance
+- **Telegram Integration**: Comprehensive notification system
 
-## Tech Stack
+### AI-Powered Features
+- **Event Plan Generation**: AI creates detailed event plans based on requirements
+- **Role Suggestions**: AI recommends optimal team roles and responsibilities
+- **Task Breakdown**: Intelligent task generation and assignment
+- **PDF/Excel Export**: Export event plans and action items
+- **Multi-language Support**: AI responses in multiple languages
 
-**Frontend:**
-- React 19
-- Vite
-- Tailwind CSS
-- React Router DOM
-- Google OAuth
+### Admin Features
+- **User Management**: Admin dashboard for user role management
+- **System Analytics**: Comprehensive usage statistics and insights
+- **Data Export**: Export system data in multiple formats
+- **Channel Oversight**: Monitor and manage all channels
 
-**Backend:**
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT Authentication
+## Architecture
 
-## Setup Instructions
+### Multi-Server Architecture
+- **React Frontend** (Port 5173): User interface and client-side logic
+- **Node.js API Server** (Port 5000): Main application logic, database, and real-time features
+- **Python AI Backend** (Port 5001): AI processing, plan generation, and ML features
 
-### Prerequisites
-- Node.js (v16 or higher)
+### Tech Stack
+
+#### Frontend
+- React 18 with Vite
+- Tailwind CSS for styling
+- Framer Motion for animations
+- Socket.IO client for real-time updates
+- Axios for API communication
+
+#### Node.js Backend
+- Express.js server
+- MongoDB with Mongoose ODM
+- Socket.IO for real-time communication
+- JWT authentication
+- Telegram Bot API integration
+
+#### Python AI Backend
+- Flask web framework
+- LangChain with Groq LLM
+- MongoDB integration
+- PDF generation with ReportLab
+- Excel export with OpenPyXL
+- Multi-language support
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- Python (v3.8 or higher)
 - MongoDB (local or cloud)
-- Google Cloud Console account for OAuth
+- Google OAuth credentials
+- Groq API key for AI features
+- Telegram Bot Token (optional)
 
-### 1. Install Dependencies
+## Installation & Setup
+
+### 1. Clone and Install Dependencies
+
 ```bash
+git clone <repository-url>
+cd ai-productivity-app
 npm install
 ```
 
-### 2. Environment Variables
+### 2. Set Up Python AI Backend
 
-Create a `.env.local` file in the root directory:
-```env
-VITE_GOOGLE_CLIENT_ID=your-google-client-id-here
-VITE_API_URL=http://localhost:5000
-```
-
-Update the `.env` file for backend configuration:
-```env
-PORT=5000
-CLIENT_URL=http://localhost:5173
-MONGODB_URI=mongodb://localhost:27017/ai-productivity-app
-JWT_SECRET=your-super-secret-jwt-key
-GOOGLE_CLIENT_ID=your-google-client-id-here
-GOOGLE_CLIENT_SECRET=your-google-client-secret-here
-```
-
-### 3. Google OAuth Setup
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized origins: `http://localhost:5173`
-6. Add authorized redirect URIs: `http://localhost:5173`
-7. Copy the Client ID to your environment variables
-
-### 4. MongoDB Setup
-
-**Option 1: Local MongoDB**
-- Install MongoDB locally
-- Start MongoDB service
-- Database will be created automatically
-
-**Option 2: MongoDB Atlas (Cloud)**
-- Create account at [MongoDB Atlas](https://www.mongodb.com/atlas)
-- Create a cluster
-- Get connection string
-- Update MONGODB_URI in .env file
-
-### 5. Run the Application
-
-**Development Mode (Frontend + Backend):**
 ```bash
-npm run dev:full
+# Navigate to AI backend directory
+cd ai-backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment (Windows)
+venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
 ```
 
-**Or run separately:**
+### 3. Configure Environment Variables
 
+#### Main `.env` file:
+```env
+MONGODB_URI=mongodb://localhost:27017/ai-productivity-app
+JWT_SECRET=your-jwt-secret-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+CLIENT_URL=http://localhost:5173
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+```
+
+#### AI Backend `.env` file (`ai-backend/.env`):
+```env
+GROQ_API_KEY=your-groq-api-key
+MONGODB_URI=mongodb://localhost:27017/ai-productivity-app
+NODE_SERVER_URL=http://localhost:5000
+FLASK_PORT=5001
+FLASK_DEBUG=True
+```
+
+### 4. Start All Servers
+
+#### Option 1: Use the batch script (Windows)
 Frontend only:
 ```bash
 npm run dev

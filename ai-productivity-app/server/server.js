@@ -9,6 +9,7 @@ import userRoutes from './routes/user.js';
 import channelRoutes from './routes/channel.js';
 import taskRoutes from './routes/task.js';
 import aiRoutes from './routes/ai.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST']
   }
 });
+
+// Make io available to routes
+app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 
@@ -84,6 +88,21 @@ app.use('/api/user', userRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
+
+// AI Backend integration endpoint
+app.post('/api/ai/plan-generated', (req, res) => {
+  const { channelId, planId, eventType } = req.body;
+  
+  // Emit to channel members that a new plan is available
+  io.to(channelId).emit('ai-plan-generated', {
+    planId,
+    eventType,
+    timestamp: new Date()
+  });
+  
+  res.json({ success: true });
+});
 
 app.get('/', (req, res) => {
   res.json({ message: 'AI Productivity App API Server with Socket.IO' });

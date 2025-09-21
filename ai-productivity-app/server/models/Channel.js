@@ -15,6 +15,13 @@ const channelSchema = new mongoose.Schema({
     enum: ['hackathon', 'wedding', 'conference', 'workshop', 'meeting', 'festival', 'other'],
     default: 'other'
   },
+  aiContext: {
+    objective: String,
+    targetAudience: String,
+    budget: String,
+    timeline: String,
+    challenges: String
+  },
   admin: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

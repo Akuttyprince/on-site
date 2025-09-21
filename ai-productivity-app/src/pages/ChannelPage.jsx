@@ -21,6 +21,7 @@ import KanbanBoard from '../components/KanbanBoard'
 import ChannelAnalytics from '../components/ChannelAnalytics'
 import ChannelSettings from '../components/ChannelSettings'
 import GlobalChat from '../components/GlobalChat'
+import AIAssistant from '../components/AIAssistant'
 
 const ChannelPage = () => {
   const { channelId } = useParams()
@@ -29,6 +30,7 @@ const ChannelPage = () => {
   const [activeTab, setActiveTab] = useState('chat')
   const [loading, setLoading] = useState(true)
   const [showGlobalChat, setShowGlobalChat] = useState(false)
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
   useEffect(() => {
     fetchChannelData()
@@ -218,6 +220,14 @@ const ChannelPage = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* AI Assistant */}
+      <AIAssistant
+        channelId={channelId}
+        channelData={channel}
+        isOpen={showAIAssistant}
+        onToggle={() => setShowAIAssistant(!showAIAssistant)}
+      />
     </div>
   )
 }

@@ -176,13 +176,25 @@ router.patch('/:taskId/status', auth.verifyToken, async (req, res) => {
 
     // Send Telegram notifications
     if (telegramIds.length > 0) {
-      await telegramService.sendTaskUpdate(telegramIds[0], {
-        task,
-        user: updatedBy,
-        oldStatus,
-        newStatus: status,
-        timestamp: new Date()
-      });
+      if (status === 'done' || status === 'completed') {
+        // Send task completion notification to all channel members
+        await telegramService.sendTaskCompletionNotification(telegramIds, {
+          task,
+          user: updatedBy,
+          completedAt: new Date()
+        }, {
+          channel
+        });
+      } else {
+        // Send regular task update notification
+        await telegramService.sendTaskUpdate(telegramIds[0], {
+          task,
+          user: updatedBy,
+          oldStatus,
+          newStatus: status,
+          timestamp: new Date()
+        });
+      }
     }
 
     res.json({
@@ -234,6 +246,94 @@ router.post('/:taskId/comment', auth.verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Add comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create tasks from AI action plan
+router.post('/create-from-ai', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId, actionPlan } = req.body;
+
+    if (!channelId || !actionPlan) {
+      return res.status(400).json({ message: 'Channel ID and action plan are required' });
+    }
+
+    // Verify channel exists and user has access
+    const channel = await Channel.findById(channelId).populate('members.user', 'name email');
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    const isMember = channel.members.some(member => 
+      member.user._id.toString() === req.userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const createdTasks = [];
+
+    // Create tasks from action plan cards
+    if (actionPlan.cards && Array.isArray(actionPlan.cards)) {
+      for (const card of actionPlan.cards) {
+        if (card.tasks && Array.isArray(card.tasks)) {
+          for (const taskItem of card.tasks) {
+            // Find assignee by role or name
+            let assignedTo = null;
+            if (taskItem.assignee) {
+              const member = channel.members.find(m => 
+                m.role === taskItem.assignee.toLowerCase() || 
+                m.user.name.toLowerCase().includes(taskItem.assignee.toLowerCase())
+              );
+              assignedTo = member?.user._id;
+            }
+
+            const task = new Task({
+              title: taskItem.task,
+              description: `${card.title}: ${card.description}`,
+              channel: channelId,
+              assignedTo,
+              createdBy: req.userId,
+              priority: card.priority || 'medium',
+              category: card.category || 'general',
+              tags: [card.category, 'ai-generated'],
+              aiGenerated: true,
+              parentCard: card.id
+            });
+
+            await task.save();
+            await task.populate('assignedTo', 'name email profilePicture');
+            await task.populate('createdBy', 'name email profilePicture');
+            
+            createdTasks.push(task);
+          }
+        }
+      }
+    }
+
+    // Send notifications to assigned members
+    const telegramIds = channel.members
+      .map(member => member.user.telegramId)
+      .filter(id => id);
+
+    if (telegramIds.length > 0) {
+      const user = await User.findById(req.userId);
+      await telegramService.sendChannelNotification(telegramIds, channel, {
+        channel,
+        user,
+        message: `🤖 AI has created ${createdTasks.length} new tasks from the action plan!`,
+        timestamp: new Date()
+      });
+    }
+
+    res.status(201).json({
+      message: `Created ${createdTasks.length} tasks from AI action plan`,
+      tasks: createdTasks
+    });
+  } catch (error) {
+    console.error('Create tasks from AI error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
