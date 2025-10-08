@@ -161,7 +161,43 @@ const GlobalChat = ({ channel, isOpen, onClose }) => {
   }
 
   const renderMessage = (message, index) => {
-    if (!message || !message.sender) return null
+    if (!message) return null
+    
+    // Check if this is an AI message
+    const isAIMessage = message.isAI || message.type === 'ai-response' || message.type === 'ai-welcome'
+    
+    if (isAIMessage) {
+      // Render AI message with special styling
+      return (
+        <motion.div
+          key={message._id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-start mb-4"
+        >
+          <div className="flex items-start space-x-3 max-w-2xl">
+            {/* AI Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-lg">🤖</span>
+            </div>
+
+            {/* AI Message Bubble */}
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 px-4 py-3 rounded-2xl rounded-tl-md">
+              <div className="text-xs font-semibold text-purple-700 mb-2">AI Assistant</div>
+              <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                {message.content}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                {formatMessageTime(message.createdAt)}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )
+    }
+
+    // Regular user message
+    if (!message.sender) return null
     
     const isOwn = message.sender._id === user._id
     const showAvatar = !isOwn && (index === 0 || messages[index - 1]?.sender?._id !== message.sender._id)

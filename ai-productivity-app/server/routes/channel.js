@@ -331,6 +331,50 @@ router.post('/:channelId/messages', auth.verifyToken, async (req, res) => {
       });
     }
 
+    // Check if message should get AI response
+    const shouldGetAIResponse = content.toLowerCase().includes('ai') || 
+                                content.includes('?') || 
+                                content.toLowerCase().includes('help') ||
+                                content.toLowerCase().includes('suggest') ||
+                                content.toLowerCase().includes('plan');
+
+    if (shouldGetAIResponse) {
+      try {
+        // Call AI backend
+        const axios = (await import('axios')).default;
+        const aiResponse = await axios.post('http://localhost:5001/api/ai/chat', {
+          message: content,
+          channelId: channelId,
+          userId: req.userId,
+          eventType: channel.eventType,
+          aiContext: channel.aiContext || {}
+        });
+
+        if (aiResponse.data.success) {
+          // Create AI message
+          const aiMessage = new Message({
+            content: aiResponse.data.response,
+            type: 'ai-response',
+            isAI: true,
+            channel: channelId
+          });
+
+          await aiMessage.save();
+
+          // Emit AI response to channel
+          if (req.app.get('io')) {
+            req.app.get('io').to(channelId).emit('new-message', {
+              message: aiMessage,
+              channelId: channelId
+            });
+          }
+        }
+      } catch (aiError) {
+        console.error('AI response error:', aiError);
+        // Don't fail the message send if AI fails
+      }
+    }
+
     // Send Telegram notifications to all members
     const telegramIds = channel.members
       .map(member => member.user.telegramId)
@@ -349,6 +393,113 @@ router.post('/:channelId/messages', auth.verifyToken, async (req, res) => {
     res.status(201).json({ message });
   } catch (error) {
     console.error('Send message error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete channel
+router.delete('/:channelId', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId } = req.params;
+
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    // Check if user is admin
+    if (channel.admin.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Only admin can delete channel' });
+    }
+
+    // Delete all messages in the channel
+    await Message.deleteMany({ channel: channelId });
+
+    // Delete all tasks in the channel
+    const Task = (await import('../models/Task.js')).default;
+    await Task.deleteMany({ channel: channelId });
+
+    // Delete the channel
+    await Channel.findByIdAndDelete(channelId);
+
+    res.json({ message: 'Channel deleted successfully' });
+  } catch (error) {
+    console.error('Delete channel error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update channel
+router.put('/:channelId', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    const { name, description, eventType, status } = req.body;
+
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    // Check if user is admin
+    if (channel.admin.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Only admin can update channel' });
+    }
+
+    // Update fields
+    if (name) channel.name = name;
+    if (description !== undefined) channel.description = description;
+    if (eventType) channel.eventType = eventType;
+    if (status) channel.status = status;
+
+    await channel.save();
+    await channel.populate('admin', 'name email profilePicture');
+    await channel.populate('members.user', 'name email profilePicture');
+
+    res.json({ 
+      message: 'Channel updated successfully',
+      channel 
+    });
+  } catch (error) {
+    console.error('Update channel error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove member from channel
+router.delete('/:channelId/members/:memberId', auth.verifyToken, async (req, res) => {
+  try {
+    const { channelId, memberId } = req.params;
+
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    // Check if user is admin
+    if (channel.admin.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Only admin can remove members' });
+    }
+
+    // Don't allow removing admin
+    if (channel.admin.toString() === memberId) {
+      return res.status(400).json({ message: 'Cannot remove admin from channel' });
+    }
+
+    // Remove member
+    channel.members = channel.members.filter(
+      member => member.user.toString() !== memberId
+    );
+
+    await channel.save();
+    await channel.populate('admin', 'name email profilePicture');
+    await channel.populate('members.user', 'name email profilePicture');
+
+    res.json({ 
+      message: 'Member removed successfully',
+      channel 
+    });
+  } catch (error) {
+    console.error('Remove member error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

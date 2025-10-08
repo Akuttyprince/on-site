@@ -94,38 +94,22 @@ Let's make this event amazing! 🚀`,
     setAiLoading(true)
 
     try {
-      // Check if this is a request for AI plan generation
-      if (messageText.toLowerCase().includes('generate') && 
-          (messageText.toLowerCase().includes('plan') || messageText.toLowerCase().includes('action'))) {
-        
-        // Generate AI event plan
-        const planResponse = await axios.post('/api/ai/generate-plan', {
-          channelId: channel._id,
-          eventDetails: {
-            eventType: channel.eventType,
-            eventName: channel.name,
-            description: channel.description
-          }
-        })
-
-        const aiPlanMessage = {
-          _id: `ai-plan-${Date.now()}`,
-          content: planResponse.data.plan,
-          type: 'ai-response',
-          isAI: true,
-          metadata: { type: 'event-plan', plan: planResponse.data.plan },
-          createdAt: new Date().toISOString()
+      // Call real AI backend with channel context
+      const response = await axios.post('http://localhost:5001/api/ai/chat', {
+        message: messageText,
+        channelId: channel._id,
+        userId: user._id,
+        eventType: channel.eventType,
+        aiContext: channel.aiContext || {
+          objective: channel.description,
+          targetAudience: 'General audience',
+          budget: 'To be determined',
+          timeline: 'Flexible',
+          challenges: 'Planning and execution'
         }
+      })
 
-        setMessages(prev => [...prev, aiPlanMessage])
-      } else {
-        // Regular AI question
-        const response = await axios.post('/api/ai/ask', {
-          channelId: channel._id,
-          question: messageText,
-          context: { eventType: channel.eventType, eventName: channel.name }
-        })
-
+      if (response.data.success) {
         const aiResponse = {
           _id: `ai-${Date.now()}`,
           content: response.data.response,
@@ -140,7 +124,7 @@ Let's make this event amazing! 🚀`,
       console.error('AI response error:', error)
       const errorMessage = {
         _id: `error-${Date.now()}`,
-        content: "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment.",
+        content: "I'm sorry, I'm having trouble processing your request right now. Please make sure the AI backend is running on port 5001.",
         type: 'ai-response',
         isAI: true,
         createdAt: new Date().toISOString()
@@ -157,19 +141,31 @@ Let's make this event amazing! 🚀`,
       label: 'Generate Action Plan',
       message: 'Generate a comprehensive action plan for our event',
       icon: Lightbulb,
-      color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+      color: 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 shadow-lg'
     },
     {
       label: 'Suggest Timeline',
       message: 'What timeline should we follow for this event?',
       icon: Calendar,
-      color: 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+      color: 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg'
     },
     {
       label: 'Role Suggestions',
       message: 'What team roles do we need for this event?',
       icon: CheckCircle,
-      color: 'bg-green-100 text-green-700 hover:bg-green-200'
+      color: 'bg-gradient-to-r from-green-400 to-teal-500 text-white hover:from-green-500 hover:to-teal-600 shadow-lg'
+    },
+    {
+      label: 'Budget Ideas',
+      message: 'Help me plan the budget for this event',
+      icon: Sparkles,
+      color: 'bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:from-pink-600 hover:to-rose-700 shadow-lg'
+    },
+    {
+      label: 'Task Breakdown',
+      message: 'Break down tasks for this event',
+      icon: Clock,
+      color: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white hover:from-indigo-600 hover:to-blue-700 shadow-lg'
     }
   ]
 
