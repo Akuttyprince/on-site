@@ -20,63 +20,63 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route 
-                path="/profile-setup" 
+              <Route
+                path="/profile-setup"
                 element={
                   <ProtectedRoute>
                     <ProfileSetup />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/profile-edit" 
+              <Route
+                path="/profile-edit"
                 element={
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <ProfileEdit />
                     </ErrorBoundary>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/dashboard" 
+              <Route
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <Dashboard />
                     </ErrorBoundary>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/channel/:channelId" 
+              <Route
+                path="/channel/:channelId"
                 element={
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <ChannelPage />
                     </ErrorBoundary>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/channel/:channelId/chat" 
+              <Route
+                path="/channel/:channelId/chat"
                 element={
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <ChannelPage />
                     </ErrorBoundary>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/admin" 
+              <Route
+                path="/admin"
                 element={
                   <ProtectedRoute>
                     <ErrorBoundary>
                       <AdminDashboard />
                     </ErrorBoundary>
                   </ProtectedRoute>
-                } 
+                }
               />
             </Routes>
           </div>
